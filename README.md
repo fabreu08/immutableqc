@@ -51,7 +51,7 @@ Your laboratory ecosystem—HPLC, Mass Spectrometers, pH meters, and environment
 
 ## 📄 License
 
-[CC0-1.0 license]
+[Apache Version 2.0]
 
 ## 🤝 Contact
 
