@@ -56,4 +56,4 @@ Your laboratory ecosystem—HPLC, Mass Spectrometers, pH meters, and environment
 ## 🤝 Contact
 
 For inquiries regarding pilot programs or integration:
-[immutableqc.com]
+[hi@immutableqc.com]
