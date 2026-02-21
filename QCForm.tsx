@@ -1,48 +1,48 @@
-     'use client';                                                                                                                                                                                                                                   
+     'use client';
 
       import { useState } from 'react';
-      import { TransactionButton } from 'thirdweb/react';
-      import { useActiveAccount, useSendUserOperation } from 'thirdweb/react';
-      import { useWriteContract } from 'wagmi';
-      import { client, chain, contract, paymasterConfig, getWalletBalance, estimateGas } from '../app/client';                                                                                                                                      
+      import { TransactionButton, useSendTransaction } from 'thirdweb/react';
+      import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
+      import { base } from 'wagmi/chains';
+      import { contractAddress, contractABI, paymasterConfig, getWalletBalance, estimateGas } from './src/app/client';
 
-      interface MeasurementData {                                                                                                                                                                                                                     
-        hash: string;                                                                                                                                                                                                                                 
-        timestamp: number;                                                                                                                                                                                                                            
-        value: string;                                                                                                                                                                                                                                
-        metadataUri: string;                                                                                                                                                                                                                          
-      }                                                                                                                                                                                                                                               
+      interface MeasurementData {
+        hash: string;
+        timestamp: number;
+        value: string;
+        metadataUri: string;
+      }
 
-      export default function QCForm() {                                                                                                                                                                                                              
-        const [data, setData] = useState<MeasurementData>({                                                                                                                                                                                           
-          hash: '',                                                                                                                                                                                                                                   
-          timestamp: Date.now(),                                                                                                                                                                                                                      
-          value: '',                                                                                                                                                                                                                                  
-          metadataUri: ''                                                                                                                                                                                                                             
-        });                                                                                                                                                                                                                                           
-        const [error, setError] = useState('');                                                                                                                                                                                                       
-        const [loading, setLoading] = useState(false);                                                                                                                                                                                                
-        const [txnHash, setTxnHash] = useState('');                                                                                                                                                                                                   
-        const account = useActiveAccount(client);                                                                                                                                                                                                     
-        const { sendUserOperation } = useSendUserOperation({ client, chain });                                                                                                                                                                        
+      export default function QCForm() {
+        const [data, setData] = useState<MeasurementData>({
+          hash: '',
+          timestamp: Date.now(),
+          value: '',
+          metadataUri: ''
+        });
+        const [error, setError] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [txnHash, setTxnHash] = useState('');
+        const account = useActiveAccount(client);
+        const { mutate: sendTransaction } = useSendTransaction({ client, chain });
 
-        // Header: FDA-Grade on Mainnet                                                                                                                                                                                                               
-        const headerTitle = 'FDA-Grade Integrity on Base Mainnet'; // FIXED: No Sepolia                                                                                                                                                               
+        // Header: FDA-Grade on Mainnet
+        const headerTitle = 'FDA-Grade Integrity on Base Mainnet'; // FIXED: No Sepolia
 
-        const prepareAndMint = async () => {                                                                                                                                                                                                          
-          console.log('[MAINNET FIX] Starting mainnet mintTo on Base 8453');                                                                                                                                                                          
-          if (!account) {                                                                                                                                                                                                                             
-            const err = 'Wallet connect required for mainnet';                                                                                                                                                                                        
-            console.error('[MAINNET FIX ERROR]', err);                                                                                                                                                                                                
-            setError(err);                                                                                                                                                                                                                            
-            return;                                                                                                                                                                                                                                   
-          }                                                                                                                                                                                                                                           
-          if (!data.hash || !data.value) {                                                                                                                                                                                                            
-            const err = 'Complete form for QC record';                                                                                                                                                                                                
-            console.error('[MAINNET FIX ERROR]', err);                                                                                                                                                                                                
-            setError(err);                                                                                                                                                                                                                            
-            return;                                                                                                                                                                                                                                   
-          }                                                                                                                                                                                                                                           
+        const prepareAndMint = async () => {
+          console.log('[MAINNET FIX] Starting mainnet mintTo on Base 8453');
+          if (!account) {
+            const err = 'Wallet connect required for mainnet';
+            console.error('[MAINNET FIX ERROR]', err);
+            setError(err);
+            return;
+          }
+          if (!data.hash || !data.value) {
+            const err = 'Complete form for QC record';
+            console.error('[MAINNET FIX ERROR]', err);
+            setError(err);
+            return;
+          }
 
         setLoading(true);
         setError('');
@@ -56,7 +56,7 @@
           console.log('[MAINNET FIX] Step 2: Balance check on mainnet');
           const balance = await getWalletBalance(account.address);
           if (balance < 0.001) {
-            const err = 'Low ETH — bridge to Base mainnet (8453)';
+            const err = 'Low ETH - bridge to Base mainnet (8453)';
             console.error('[MAINNET FIX ERROR]', err);
             throw new Error(err);
           }
@@ -70,7 +70,7 @@
             params: [account.address, uri, data.value, signature, data.timestamp],
           });
           if (Number(gasEstimate) > 500000n) {
-            const err = 'High gas — retry on calmer network';
+            const err = 'High gas - retry on calmer network';
             console.error('[MAINNET FIX ERROR]', err);
             throw new Error(err);
           }
@@ -79,7 +79,7 @@
           let txn;
           try {
             if (!paymasterConfig.policyId) {
-              console.warn('[MAINNET FIX] No paymaster policy — falling back to EOA gas payment');
+              console.warn('[MAINNET FIX] No paymaster policy - falling back to EOA gas payment');
             }
 
             console.log('[MAINNET FIX] Sending user op to mainnet with paymaster');
@@ -122,74 +122,74 @@
         } catch (err: any) {
           const msg = err.message || 'Mainnet mint failed';
           console.error('[MAINNET FIX ERROR Full]', err, { chain: chain.id, address: account?.address });
-          setError(`Mainnet Error: ${msg} — Check console for auth/gas logs. If Unauthorized, ensure Replit URL whitelisted in Thirdweb dashboard.`);
+          setError(`Mainnet Error: ${msg} - Check console for auth/gas logs. If Unauthorized, ensure Replit URL whitelisted in Thirdweb dashboard.`);
         } finally {
           setLoading(false);
-        }                                                                                                                                                                                                                                             
+        }
 
-        };                                                                                                                                                                                                                                            
+        };
 
         const onError = (err: any) => {
           console.error('[MAINNET FIX TransactionButton Error]', err);
           const errMsg = err.message || err.toString();
           if (errMsg.includes('Unauthorized')) {
-            setError('Unauthorized: Paymaster policy failed. EOA fallback attempted—check wallet gas on Base. Whitelist domain in Thirdweb dashboard if persistent.');
+            setError('Unauthorized: Paymaster policy failed. EOA fallback attempted-check wallet gas on Base. Whitelist domain in Thirdweb dashboard if persistent.');
           } else {
             setError(errMsg);
           }
-        };                                                                                                                                                                                                                                            
+        };
 
-        const onSuccess = (result: any) => {                                                                                                                                                                                                          
-          console.log('[MAINNET FIX Success]', result);                                                                                                                                                                                               
-          setTxnHash(result.hash || result.receipt?.transactionHash || '');                                                                                                                                                                           
-        };                                                                                                                                                                                                                                            
+        const onSuccess = (result: any) => {
+          console.log('[MAINNET FIX Success]', result);
+          setTxnHash(result.hash || result.receipt?.transactionHash || '');
+        };
 
-        const viewTxn = () => txnHash && window.open(https://basescan.or g/tx/${txnHash}, '_blank');                                                                                                                                                  
+        const viewTxn = () => txnHash && window.open(https://basescan.or g/tx/${txnHash}, '_blank');
 
-        return (                                                                                                                                                                                                                                      
-          <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px' }}>                                                                                                                                                                        
-            <h2>{headerTitle}</h2> {/* FIXED: Base Mainnet */}                                                                                                                                                                                        
-            <p>Sign & mint QC record as NFT on Base mainnet (8453). Paymaster logging active.</p>                                                                                                                                                     
-            {!account ? (                                                                                                                                                                                                                             
-              <p>Connect MetaMask to Base mainnet (8453).</p>                                                                                                                                                                                         
-            ) : (                                                                                                                                                                                                                                     
-              <form onSubmit={(e) => { e.preventDefault(); prepareAndMint(); }}>                                                                                                                                                                      
-                <input                                                                                                                                                                                                                                
-                  type="text"                                                                                                                                                                                                                         
-                  placeholder="Data Hash (SHA256)"                                                                                                                                                                                                    
-                  value={data.hash}                                                                                                                                                                                                                   
-                  onChange={(e) => setData({ ...data, hash: e.target.value })}                                                                                                                                                                        
-                  required                                                                                                                                                                                                                            
-                  disabled={loading}                                                                                                                                                                                                                  
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px' }}                                                                                                                                                                     
-                />                                                                                                                                                                                                                                    
-                <input                                                                                                                                                                                                                                
-                  type="text"                                                                                                                                                                                                                         
-                  placeholder="Value (e.g., pH 7.2)"                                                                                                                                                                                                  
-                  value={data.value}                                                                                                                                                                                                                  
-                  onChange={(e) => setData({ ...data, value: e.target.value })}                                                                                                                                                                       
-                  required                                                                                                                                                                                                                            
-                  disabled={loading}                                                                                                                                                                                                                  
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px' }}                                                                                                                                                                     
-                />                                                                                                                                                                                                                                    
-                <input                                                                                                                                                                                                                                
-                  type="text"                                                                                                                                                                                                                         
-                  placeholder="IPFS URI (optional)"                                                                                                                                                                                                   
-                  value={data.metadataUri}                                                                                                                                                                                                            
-                  onChange={(e) => setData({ ...data, metadataUri: e.target.value })}                                                                                                                                                                 
-                  disabled={loading}                                                                                                                                                                                                                  
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px' }}                                                                                                                                                                     
-                />                                                                                                                                                                                                                                    
-                <TransactionButton                                                                                                                                                                                                                    
-                  transaction={prepareAndMint}                                                                                                                                                                                                        
-                  onError={onError}                                                                                                                                                                                                                   
-                  onSuccess={onSuccess}                                                                                                                                                                                                               
-                  disabled={loading || !data.hash || !data.value}                                                                                                                                                                                     
-                  style={{ width: '100%', padding: '10px', background: '#0070f3', color: 'white', border: 'none' }}                                                                                                                                   
-                >                                                                                                                                                                                                                                     
-                  {loading ? 'Committing to Mainnet...' : 'Sign & Submit to Base Mainnet'}                                                                                                                                                            
-                </TransactionButton>                                                                                                                                                                                                                  
-                {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}                                                                                                                                                                 
+        return (
+          <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px' }}>
+            <h2>{headerTitle}</h2> {/* FIXED: Base Mainnet */}
+            <p>Sign & mint QC record as NFT on Base mainnet (8453). Paymaster logging active.</p>
+            {!account ? (
+              <p>Connect MetaMask to Base mainnet (8453).</p>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); prepareAndMint(); }}>
+                <input
+                  type="text"
+                  placeholder="Data Hash (SHA256)"
+                  value={data.hash}
+                  onChange={(e) => setData({ ...data, hash: e.target.value })}
+                  required
+                  disabled={loading}
+                  style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Value (e.g., pH 7.2)"
+                  value={data.value}
+                  onChange={(e) => setData({ ...data, value: e.target.value })}
+                  required
+                  disabled={loading}
+                  style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
+                />
+                <input
+                  type="text"
+                  placeholder="IPFS URI (optional)"
+                  value={data.metadataUri}
+                  onChange={(e) => setData({ ...data, metadataUri: e.target.value })}
+                  disabled={loading}
+                  style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
+                />
+                <TransactionButton
+                  transaction={prepareAndMint}
+                  onError={onError}
+                  onSuccess={onSuccess}
+                  disabled={loading || !data.hash || !data.value}
+                  style={{ width: '100%', padding: '10px', background: '#0070f3', color: 'white', border: 'none' }}
+                >
+                  {loading ? 'Committing to Mainnet...' : 'Sign & Submit to Base Mainnet'}
+                </TransactionButton>
+                {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
                 {txnHash && (
                   <div style={{ marginTop: '10px' }}>
                     <p>Mainnet Txn: {typeof txnHash === 'string' ? txnHash.slice(0, 20) + '...' : JSON.stringify(txnHash).slice(0, 20) + '...'}</p>
@@ -203,4 +203,4 @@
             )}
           </div>
         );
-      }                    
+      }
